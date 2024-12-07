@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # Valeurs par défaut
-TOKEN=""
-DISCOVERY_HASH=""
-CONTROL_PLANE_ENDPOINT="my-control-plane.example.com:6443"
-K8S_VERSION="v1.31.3"
-CERTIFICATE_KEY=""
+TOKEN="tbvdxf.ci66fzk1qzkp5x6o"
+DISCOVERY_HASH="sha256:308b866f521e417cd5cf7af518802c6f5f7874f72cbc2a17958b3d44182853b2"
+CONTROL_PLANE_ENDPOINT="198.19.249.218:6443"
+K8S_VERSION="v1.31"
+CERTIFICATE_KEY="659e82eb5d7f74cdeac45c6d7c242de54814acfaf86b517ae36e06ac2598e0ea"
 
 usage() {
     echo "Usage: $0 [options]"
