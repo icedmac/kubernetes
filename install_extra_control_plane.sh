@@ -2,10 +2,11 @@
 set -euo pipefail
 
 # Valeurs par défaut
-TOKEN="tbvdxf.ci66fzk1qzkp5x6o"
-DISCOVERY_HASH="sha256:308b866f521e417cd5cf7af518802c6f5f7874f72cbc2a17958b3d44182853b2"
-CONTROL_PLANE_ENDPOINT="198.19.249.218:6443"
-K8S_VERSION="v1.31"
+TOKEN=""
+DISCOVERY_HASH=""
+CONTROL_PLANE_ENDPOINT="my-control-plane.example.com:6443"
+K8S_VERSION="v1.31.3"
+CERTIFICATE_KEY=""
 
 usage() {
     echo "Usage: $0 [options]"
@@ -14,13 +15,14 @@ usage() {
     echo "  --discovery-token-ca-cert-hash=HASH          Hash du CA cert pour la découverte"
     echo "  --control-plane-endpoint=ENDPOINT            Endpoint du Control-Plane (défaut: $CONTROL_PLANE_ENDPOINT)"
     echo "  --k8s-version=VERSION                        Version de Kubernetes (défaut: $K8S_VERSION)"
+    echo "  --certificate-key=KEY                        Clé pour déchiffrer les certificats du control-plane"
     echo "  -h, --help                                   Affiche cette aide"
     exit 0
 }
 
 TEMP=$(getopt \
   -o h \
-  --long help,token:,discovery-token-ca-cert-hash:,control-plane-endpoint:,k8s-version: \
+  --long help,token:,discovery-token-ca-cert-hash:,control-plane-endpoint:,k8s-version:,certificate-key: \
   -n "$0" -- "$@")
 
 if [ $? != 0 ]; then
@@ -47,6 +49,10 @@ while true; do
       K8S_VERSION="$2"
       shift 2
       ;;
+    --certificate-key)
+      CERTIFICATE_KEY="$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       ;;
@@ -61,8 +67,8 @@ while true; do
   esac
 done
 
-if [ -z "$TOKEN" ] || [ -z "$DISCOVERY_HASH" ]; then
-    echo "Erreur: Vous devez spécifier --token et --discovery-token-ca-cert-hash."
+if [ -z "$TOKEN" ] || [ -z "$DISCOVERY_HASH" ] || [ -z "$CERTIFICATE_KEY" ]; then
+    echo "Erreur: Vous devez spécifier --token, --discovery-token-ca-cert-hash et --certificate-key."
     usage
 fi
 
@@ -345,11 +351,12 @@ if ! command -v kubeadm &>/dev/null; then
     apt-mark hold kubelet kubeadm kubectl
 fi
 
-echo "Rejoindre le cluster Kubernetes en tant que nœud control-plane..."
+echo "Rejoindre le cluster Kubernetes en tant que nœud control-plane avec la clé de certificat..."
 kubeadm join "$CONTROL_PLANE_ENDPOINT" \
     --token "$TOKEN" \
     --discovery-token-ca-cert-hash "$DISCOVERY_HASH" \
-    --control-plane
+    --control-plane \
+    --certificate-key "$CERTIFICATE_KEY"
 
 echo "Le nœud a rejoint le cluster avec succès en tant que control-plane node."
-echo "Pour interagir avec le cluster, utilisez l'admin.conf du premier master ou mettez en place un mécanisme pour récupérer l'admin.conf sur ce nœud."
+echo "Pour interagir avec le cluster sur ce nœud, récupérez le kubeconfig admin ou configurez une méthode appropriée."
